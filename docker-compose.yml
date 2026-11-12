@@ -10,6 +10,7 @@ services:
       - "5435:5432"
     volumes:
       - sweety_pgdata:/var/lib/postgresql/data
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
 
 volumes:
   sweety_pgdata:
