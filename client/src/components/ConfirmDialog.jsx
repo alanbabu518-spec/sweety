@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import useScrollLock from "../useScrollLock";
 
 export default function ConfirmDialog({
   open,
@@ -24,6 +25,7 @@ export default function ConfirmDialog({
   }, [open]);
 
   if (!open) return null;
+  useScrollLock(open);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6">

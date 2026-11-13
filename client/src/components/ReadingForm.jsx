@@ -5,6 +5,7 @@ import { formatDate } from "../dates";
 import { btnPrimary, btnText } from "../ui";
 import ConfirmDialog from "./ConfirmDialog";
 import FormError from "./FormError";
+import useScrollLock from "../useScrollLock";
 
 export default function ReadingForm({
   date,
@@ -22,6 +23,7 @@ export default function ReadingForm({
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const inputRef = useRef(null);
+  useScrollLock(sheetOpen, true);
 
   // Prefill when the selected slot (or its reading) changes.
   useEffect(() => {

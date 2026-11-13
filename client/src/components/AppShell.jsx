@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { btnText } from "../ui";
 import Logo from "./Logo";
+import useScrollLock from "../useScrollLock";
 
 const icon = {
   width: 22,
@@ -153,6 +154,7 @@ function DesktopAccount({ user, onLogout }) {
 // Mobile: bottom sheet with account details and Log out.
 function AccountSheet({ user, open, onClose, onLogout }) {
   const closeRef = useRef(null);
+  useScrollLock(open, true);
 
   useEffect(() => {
     if (!open) return;
@@ -213,6 +215,24 @@ export default function AppShell({ children }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const closeAccount = useCallback(() => setAccountOpen(false), []);
 
+  // Remember which way we're navigating (Today = 0, Reports = 1) so pages slide the right way.
+  const routeIndex = pathname.startsWith("/reports") ? 1 : 0;
+  const route = useRef({ index: routeIndex, dir: "animate-page-right" });
+  if (route.current.index !== routeIndex) {
+    route.current = {
+      index: routeIndex,
+      dir:
+        routeIndex > route.current.index
+          ? "animate-page-right"
+          : "animate-page-left",
+    };
+  }
+
+  // New page = start at the top, instantly (a smooth scroll would fight the slide-in).
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
   const tabIndex = accountOpen ? 2 : pathname.startsWith("/reports") ? 1 : 0;
   const mobileTab = ({ isActive }) =>
     `press relative flex min-h-11 flex-1 flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-semibold transition-colors ${
@@ -260,7 +280,12 @@ export default function AppShell({ children }) {
         tabIndex={-1}
         className="mx-auto max-w-[1200px] px-6 pb-32 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] outline-none lg:px-12 lg:pb-16 lg:pt-12"
       >
-        {children}
+        <div
+          key={pathname}
+          className={`${route.current.dir} motion-reduce:animate-none`}
+        >
+          {children}
+        </div>
       </main>
 
       {/* Mobile floating tab bar */}
