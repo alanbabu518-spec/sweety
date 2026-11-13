@@ -3,7 +3,7 @@ import { useAuth } from "./AuthContext";
 import AppShell from "./components/AppShell";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Readings from "./pages/Readings";
+import Readings from "./pages/ReadingForm";
 import Reports from "./pages/Reports";
 
 function ProtectedLayout() {
