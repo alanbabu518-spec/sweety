@@ -3,6 +3,7 @@ import api, { errorMessage } from "../api";
 import { SLOTS } from "../slots";
 import { formatDate } from "../dates";
 import { btnPrimary, btnText } from "../ui";
+import ConfirmDialog from "./ConfirmDialog";
 import FormError from "./FormError";
 
 export default function ReadingForm({
@@ -18,12 +19,15 @@ export default function ReadingForm({
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const inputRef = useRef(null);
 
   // Prefill when the selected slot (or its reading) changes.
   useEffect(() => {
     setValue(reading ? String(reading.value) : "");
     setError("");
+    setConfirming(false);
   }, [reading?.id, reading?.value, slot, date]);
 
   // On open, focus the number field so the numeric keyboard appears.
@@ -48,14 +52,20 @@ export default function ReadingForm({
   }
 
   async function remove() {
-    if (!window.confirm("Delete this reading?")) return;
+    setDeleting(true);
     try {
       await api.delete(`/readings/${reading.id}`);
+      setConfirming(false);
       onDone();
     } catch (err) {
+      setConfirming(false);
       setError(errorMessage(err));
+    } finally {
+      setDeleting(false);
     }
   }
+
+  const slotLabel = SLOTS.find((s) => s.value === slot)?.label;
 
   return (
     <>
@@ -141,7 +151,7 @@ export default function ReadingForm({
           {reading && (
             <button
               type="button"
-              onClick={remove}
+              onClick={() => setConfirming(true)}
               className={`${btnText} !text-danger`}
             >
               Delete
@@ -156,6 +166,19 @@ export default function ReadingForm({
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        open={confirming}
+        title="Delete this reading?"
+        message={
+          reading
+            ? `${slotLabel}, ${reading.value} mg/dl on ${formatDate(date)}. This can't be undone.`
+            : ""
+        }
+        busy={deleting}
+        onConfirm={remove}
+        onCancel={() => setConfirming(false)}
+      />
     </>
   );
 }
