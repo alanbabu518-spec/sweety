@@ -47,7 +47,7 @@ export default function AppShell({ children }) {
     <div className="min-h-dvh">
       {/* Desktop header */}
       <header className="glass sticky top-0 z-20 hidden border-b border-ink/5 bg-ground/80 lg:block">
-        <div className="mx-auto flex h-16 max-w-[1080px] items-center gap-8 px-12">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-8 px-12">
           <span className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <Logo size={22} />
             Sweety
@@ -70,7 +70,7 @@ export default function AppShell({ children }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1080px] px-6 pb-32 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] lg:px-12 lg:pb-16 lg:pt-12">
+      <main className="mx-auto max-w-[1200px] px-6 pb-32 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] lg:px-12 lg:pb-16 lg:pt-12">
         {children}
       </main>
 

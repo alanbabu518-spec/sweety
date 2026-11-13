@@ -66,7 +66,7 @@ function SampleCard() {
 export default function AuthLayout({ title, subtitle, children }) {
   return (
     <div className="flex min-h-dvh flex-col bg-ink lg:grid lg:grid-cols-[1.1fr_1fr] lg:bg-ground">
-      <aside className="relative overflow-hidden px-6 pb-12 pt-[calc(2.5rem+env(safe-area-inset-top,0px))] text-white lg:flex lg:flex-col lg:justify-between lg:p-16">
+      <aside className="relative overflow-hidden px-6 pb-12 pt-[calc(2.5rem+env(safe-area-inset-top,0px))] text-white lg:flex lg:flex-col lg:justify-between lg:bg-ink lg:p-16">
         <DropArt className="pointer-events-none absolute -right-8 top-4 size-44 lg:-right-40 lg:top-1/2 lg:size-[720px] lg:-translate-y-1/2" />
 
         <span className="relative flex items-center gap-2 text-lg font-bold tracking-tight lg:text-xl">
