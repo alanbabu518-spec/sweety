@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { errorMessage } from "../api";
+import { btnPrimary } from "../ui";
+import AuthLayout from "../components/AuthLayout";
+import Field from "../components/Field";
+import FormError from "../components/FormError";
 
 export default function Login() {
   const { login } = useAuth();
@@ -27,45 +31,37 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-page">
-      <form className="card auth-card" onSubmit={onSubmit}>
-        <h1>Sweety</h1>
-        <p className="muted">Log in to track your blood glucose.</p>
-
-        {error && (
-          <div className="alert alert-error" role="alert">
-            {error}
-          </div>
-        )}
-
-        <label>
-          Email
-          <input
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={onChange}
-            autoComplete="email"
-          />
-        </label>
-        <label>
-          Password
-          <input
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={onChange}
-            autoComplete="current-password"
-          />
-        </label>
-
-        <button className="btn" disabled={loading}>
+    <AuthLayout title="Welcome back" subtitle="Log in to your readings.">
+      <form onSubmit={onSubmit} noValidate className="space-y-4">
+        <Field
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={onChange}
+        />
+        <Field
+          id="password"
+          name="password"
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          value={form.password}
+          onChange={onChange}
+        />
+        <FormError>{error}</FormError>
+        <button className={`${btnPrimary} !mt-6`} disabled={loading}>
           {loading ? "Logging in…" : "Log in"}
         </button>
-        <p className="muted">
-          New here? <Link to="/register">Create an account</Link>
-        </p>
       </form>
-    </div>
+      <Link
+        to="/register"
+        className="press mt-3 flex min-h-11 items-center justify-center text-[15px] font-medium text-muted"
+      >
+        New to Sweety? <b className="ml-1.5 text-ink">Create account</b>
+      </Link>
+    </AuthLayout>
   );
 }

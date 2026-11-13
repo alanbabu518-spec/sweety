@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { errorMessage } from "../api";
+import { btnPrimary } from "../ui";
+import AuthLayout from "../components/AuthLayout";
+import Field from "../components/Field";
+import FormError from "../components/FormError";
 
 export default function Register() {
   const { register } = useAuth();
@@ -27,53 +31,45 @@ export default function Register() {
   }
 
   return (
-    <div className="auth-page">
-      <form className="card auth-card" onSubmit={onSubmit}>
-        <h1>Create account</h1>
-
-        {error && (
-          <div className="alert alert-error" role="alert">
-            {error}
-          </div>
-        )}
-
-        <label>
-          Name
-          <input
-            name="name"
-            value={form.name}
-            onChange={onChange}
-            autoComplete="name"
-          />
-        </label>
-        <label>
-          Email
-          <input
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={onChange}
-            autoComplete="email"
-          />
-        </label>
-        <label>
-          Password <span className="muted">(at least 8 characters)</span>
-          <input
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={onChange}
-            autoComplete="new-password"
-          />
-        </label>
-
-        <button className="btn" disabled={loading}>
+    <AuthLayout title="Create your account" subtitle="It takes a few seconds.">
+      <form onSubmit={onSubmit} noValidate className="space-y-4">
+        <Field
+          id="name"
+          name="name"
+          label="Name"
+          autoComplete="name"
+          value={form.name}
+          onChange={onChange}
+        />
+        <Field
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={onChange}
+        />
+        <Field
+          id="password"
+          name="password"
+          label="Password (at least 8 characters)"
+          type="password"
+          autoComplete="new-password"
+          value={form.password}
+          onChange={onChange}
+        />
+        <FormError>{error}</FormError>
+        <button className={`${btnPrimary} !mt-6`} disabled={loading}>
           {loading ? "Creating…" : "Sign up"}
         </button>
-        <p className="muted">
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
       </form>
-    </div>
+      <Link
+        to="/login"
+        className="press mt-3 flex min-h-11 items-center justify-center text-[15px] font-medium text-muted"
+      >
+        Already have an account? <b className="ml-1.5 text-ink">Log in</b>
+      </Link>
+    </AuthLayout>
   );
 }
