@@ -1,4 +1,4 @@
-const STANDARD = [
+export const DROP_PATHS = [
   "M123 30.2L65.6 102A80 80 0 0 0 48.2 147L123 147Z",
   "M133 30.2L190.4 102A80 80 0 0 1 207.8 147L133 147Z",
   "M123 157L48.2 157A80 80 0 0 0 123 231.8Z",
@@ -12,7 +12,7 @@ const SMALL = [
 ];
 
 export default function Logo({ size = 28, className = "" }) {
-  const paths = size < 32 ? SMALL : STANDARD;
+  const paths = size < 32 ? SMALL : DROP_PATHS;
   return (
     <svg
       width={size}
