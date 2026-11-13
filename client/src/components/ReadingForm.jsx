@@ -73,7 +73,7 @@ export default function ReadingForm({
           sheetOpen
             ? "fixed inset-x-0 bottom-0 z-40 animate-sheet-in rounded-t-[28px] bg-white px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-10px_40px_rgb(17_18_20/0.18)] motion-reduce:animate-none"
             : "hidden"
-        } lg:static lg:block lg:animate-none lg:rounded-3xl lg:border lg:border-ink/5 lg:bg-white lg:p-7 lg:shadow-card`}
+        } lg:sticky lg:top-24 lg:block lg:animate-none lg:rounded-3xl lg:border lg:border-ink/5 lg:bg-white lg:p-7 lg:shadow-card`}
       >
         <div className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-[#D6D8DC] lg:hidden" />
 

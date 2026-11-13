@@ -83,6 +83,7 @@ export default function Reports() {
           <div className="grid gap-6 lg:grid-cols-3">
             <ReportCard
               title="DAILY"
+              dark
               report={reports.daily}
               className={show("daily")}
             />

@@ -3,6 +3,7 @@ import api, { errorMessage } from "../api";
 import { SLOTS } from "../slots";
 import { card } from "../ui";
 import {
+  addDays,
   dayNumber,
   formatLong,
   todayString,
@@ -10,6 +11,7 @@ import {
   weekDays,
 } from "../dates";
 import DateChip from "../components/DateChip";
+import DropProgress from "../components/DropProgress";
 import FormError from "../components/FormError";
 import ReadingForm from "../components/ReadingForm";
 
@@ -20,7 +22,7 @@ const firstEmptySlot = (readings) =>
 function DateStrip({ date, onChange }) {
   const today = todayString();
   return (
-    <div className="mb-6 flex gap-1.5">
+    <div className="mb-6 flex gap-1.5 lg:hidden">
       {weekDays(date).map((d) => {
         const on = d === date;
         return (
@@ -47,12 +49,70 @@ function DateStrip({ date, onChange }) {
   );
 }
 
+function ArrowButton({ label, onClick, disabled, children }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="press hidden size-11 place-items-center rounded-full border border-ink/10 bg-white text-lg font-semibold hover:bg-chip disabled:text-faint disabled:opacity-60 lg:grid"
+    >
+      {children}
+    </button>
+  );
+}
+
+// Desktop-only at-a-glance card: average, highest, lowest and the four-part drop.
+function DaySummary({ readings }) {
+  const values = readings.map((r) => r.value);
+  const logged = new Set(readings.map((r) => r.slot));
+  const average = values.length
+    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)
+    : "—";
+
+  return (
+    <section className={`${card} hidden items-center gap-8 p-7 lg:flex`}>
+      <DropProgress logged={logged} size={112} />
+      <div className="min-w-0 flex-1">
+        <h2 className="text-[13px] font-semibold tracking-wide text-muted">
+          AVERAGE
+        </h2>
+        <p className="mt-1 flex items-baseline gap-2">
+          <span className="text-[56px] font-bold leading-none tracking-[-0.04em]">
+            {average}
+          </span>
+          <span className="text-base font-medium text-muted">mg/dl</span>
+        </p>
+      </div>
+      <dl className="flex gap-8 border-l border-ink/5 pl-8">
+        <div>
+          <dt className="text-[13px] font-semibold tracking-wide text-muted">
+            HIGHEST
+          </dt>
+          <dd className="mt-1 text-[28px] font-bold tracking-[-0.03em]">
+            {values.length ? Math.max(...values) : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[13px] font-semibold tracking-wide text-muted">
+            LOWEST
+          </dt>
+          <dd className="mt-1 text-[28px] font-bold tracking-[-0.03em]">
+            {values.length ? Math.min(...values) : "—"}
+          </dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
 function SlotRow({ slot, reading, active, last, onPick }) {
   return (
     <button
       type="button"
       onClick={onPick}
-      className={`press flex min-h-[72px] w-full items-center gap-3.5 px-5 text-left lg:px-6 ${last ? "" : "border-b border-ink/5"} ${active ? "lg:bg-chip/60" : ""}`}
+      className={`press flex min-h-[72px] w-full items-center gap-3.5 px-5 text-left lg:min-h-20 lg:px-7 ${last ? "" : "border-b border-ink/5"} ${active ? "lg:bg-chip/60" : ""}`}
     >
       {reading ? (
         <span className="grid size-8 place-items-center rounded-full bg-brand-tint">
@@ -138,6 +198,7 @@ export default function Readings() {
   const logged = SLOTS.filter((s) =>
     readings.some((r) => r.slot === s.value),
   ).length;
+  const today = todayString();
 
   return (
     <>
@@ -147,57 +208,76 @@ export default function Readings() {
             {formatLong(date)}
           </p>
           <h1 className="text-[34px] font-bold leading-none tracking-display lg:text-[44px]">
-            {date === todayString() ? "Today" : "Readings"}
+            {date === today ? "Today" : "Readings"}
           </h1>
         </div>
-        <DateChip value={date} onChange={changeDate} />
+        <div className="flex items-center gap-2">
+          <ArrowButton
+            label="Previous day"
+            onClick={() => changeDate(addDays(date, -1))}
+          >
+            ‹
+          </ArrowButton>
+          <DateChip value={date} onChange={changeDate} />
+          <ArrowButton
+            label="Next day"
+            disabled={date >= today}
+            onClick={() => changeDate(addDays(date, 1))}
+          >
+            ›
+          </ArrowButton>
+        </div>
       </div>
 
       <DateStrip date={date} onChange={changeDate} />
 
-      <div className="grid gap-8 lg:grid-cols-[1.25fr_1fr] lg:items-start">
-        <section
-          className={`transition-opacity ${loading ? "opacity-60" : ""}`}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start">
+        <div
+          className={`space-y-6 transition-opacity ${loading ? "opacity-60" : ""}`}
         >
-          <div className="mb-2.5 flex items-baseline justify-between">
-            <h2 className="text-[13px] font-semibold tracking-wide text-muted">
-              DAILY LOG
-            </h2>
-            <span className="text-[13px] font-semibold text-brand">
-              {logged} of 4 logged
-            </span>
-          </div>
-          <div className="mb-4 flex gap-1" aria-hidden="true">
-            {[0, 1, 2, 3].map((i) => (
-              <i
-                key={i}
-                className={`h-1 flex-1 rounded-sm ${i < logged ? "bg-brand" : "bg-[#E4E2DC]"}`}
-              />
-            ))}
-          </div>
+          <DaySummary readings={readings} />
 
-          {error && (
-            <div className="mb-3">
-              <FormError>{error}</FormError>
+          <section>
+            <div className="mb-2.5 flex items-baseline justify-between">
+              <h2 className="text-[13px] font-semibold tracking-wide text-muted">
+                DAILY LOG
+              </h2>
+              <span className="text-[13px] font-semibold text-brand">
+                {logged} of 4 logged
+              </span>
             </div>
-          )}
+            <div className="mb-4 flex gap-1 lg:hidden" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <i
+                  key={i}
+                  className={`h-1 flex-1 rounded-sm ${i < logged ? "bg-brand" : "bg-[#E4E2DC]"}`}
+                />
+              ))}
+            </div>
 
-          <div className={`${card} overflow-hidden`}>
-            {SLOTS.map((s, i) => (
-              <SlotRow
-                key={s.value}
-                slot={s}
-                reading={readings.find((r) => r.slot === s.value)}
-                active={slot === s.value}
-                last={i === SLOTS.length - 1}
-                onPick={() => {
-                  setSlot(s.value);
-                  setSheetOpen(true);
-                }}
-              />
-            ))}
-          </div>
-        </section>
+            {error && (
+              <div className="mb-3">
+                <FormError>{error}</FormError>
+              </div>
+            )}
+
+            <div className={`${card} overflow-hidden`}>
+              {SLOTS.map((s, i) => (
+                <SlotRow
+                  key={s.value}
+                  slot={s}
+                  reading={readings.find((r) => r.slot === s.value)}
+                  active={slot === s.value}
+                  last={i === SLOTS.length - 1}
+                  onPick={() => {
+                    setSlot(s.value);
+                    setSheetOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
 
         <ReadingForm
           date={date}
