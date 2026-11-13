@@ -13,6 +13,7 @@ export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const meets = form.password.length >= 8;
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -50,15 +51,35 @@ export default function Register() {
           value={form.email}
           onChange={onChange}
         />
-        <Field
-          id="password"
-          name="password"
-          label="Password (at least 8 characters)"
-          type="password"
-          autoComplete="new-password"
-          value={form.password}
-          onChange={onChange}
-        />
+        <div>
+          <Field
+            id="password"
+            name="password"
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            value={form.password}
+            onChange={onChange}
+          />
+          <p
+            className={`mt-2 flex items-center gap-1.5 text-[13px] font-medium transition-colors ${meets ? "text-brand" : "text-muted"}`}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+            At least 8 characters
+          </p>
+        </div>
         <FormError>{error}</FormError>
         <button className={`${btnPrimary} !mt-6`} disabled={loading}>
           {loading ? "Creating…" : "Sign up"}
