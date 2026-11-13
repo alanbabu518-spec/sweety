@@ -1,19 +1,18 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import Navbar from "./components/Navbar";
+import AppShell from "./components/AppShell";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Readings from "./pages/Readings";
 import Reports from "./pages/Reports";
 
-function ProtectedRoute({ children }) {
+function ProtectedLayout() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   return (
-    <>
-      <Navbar />
-      <main className="container">{children}</main>
-    </>
+    <AppShell>
+      <Outlet />
+    </AppShell>
   );
 }
 
@@ -41,22 +40,10 @@ export default function App() {
           </GuestRoute>
         }
       />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Readings />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/reports"
-        element={
-          <ProtectedRoute>
-            <Reports />
-          </ProtectedRoute>
-        }
-      />
+      <Route element={<ProtectedLayout />}>
+        <Route path="/" element={<Readings />} />
+        <Route path="/reports" element={<Reports />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
