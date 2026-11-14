@@ -5,6 +5,8 @@ const options = {
   windowMs: config.rateLimit.windowMs,
   standardHeaders: "draft-7", // sends RateLimit headers (and Retry-After when blocked)
   legacyHeaders: false,
+  // A request counts as "successful" only for 2xx/3xx. Used by skipSuccessfulRequests below.
+  requestWasSuccessful: (req, res) => res.statusCode < 400,
   message: { error: "Too many attempts. Please try again in a few minutes." },
 };
 

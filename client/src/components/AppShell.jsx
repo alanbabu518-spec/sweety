@@ -4,6 +4,7 @@ import { useAuth } from "../AuthContext";
 import { btnText } from "../ui";
 import Logo from "./Logo";
 import useScrollLock from "../useScrollLock";
+import useFocusTrap from "../useFocusTrap";
 
 const icon = {
   width: 22,
@@ -94,6 +95,8 @@ function DesktopAccount({ user, onLogout }) {
 
   useEffect(() => {
     if (!open) return;
+    // Keyboard users land on the first menu item as soon as the menu opens.
+    wrap.current?.querySelector('[role="menuitem"]')?.focus();
     const onDown = (e) => {
       if (!wrap.current?.contains(e.target)) setOpen(false);
     };
@@ -154,7 +157,11 @@ function DesktopAccount({ user, onLogout }) {
 // Mobile: bottom sheet with account details and Log out.
 function AccountSheet({ user, open, onClose, onLogout }) {
   const closeRef = useRef(null);
+  const sheetRef = useRef(null);
   useScrollLock(open, true);
+  // Keeps Tab inside the sheet and returns focus to the Account tab when it closes.
+  // Must come BEFORE the effect below, which moves focus into the sheet.
+  useFocusTrap(open, sheetRef);
 
   useEffect(() => {
     if (!open) return;
@@ -174,10 +181,12 @@ function AccountSheet({ user, open, onClose, onLogout }) {
         className="absolute inset-0 animate-fade-in bg-ink/40 motion-reduce:animate-none"
       />
       <div
+        ref={sheetRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Account"
-        className="relative w-full animate-sheet-in rounded-t-[28px] bg-white px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-10px_40px_rgb(17_18_20/0.18)] motion-reduce:animate-none"
+        className="relative w-full animate-sheet-in outline-none rounded-t-[28px] bg-white px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-10px_40px_rgb(17_18_20/0.18)] motion-reduce:animate-none"
       >
         <div className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-[#D6D8DC]" />
         <div className="flex items-center gap-4">

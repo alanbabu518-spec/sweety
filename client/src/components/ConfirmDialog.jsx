@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import useScrollLock from "../useScrollLock";
+import useFocusTrap from "../useFocusTrap";
 
 export default function ConfirmDialog({
   open,
@@ -10,14 +11,20 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  const dialogRef = useRef(null);
   const cancelRef = useRef(null);
   const onCancelRef = useRef(onCancel);
+  const busyRef = useRef(busy);
 
-  // Always keep the latest cancel handler.
+  // Always keep the latest values.
   onCancelRef.current = onCancel;
+  busyRef.current = busy;
 
   // Hooks must always execute in the same order.
   useScrollLock(open);
+  // Keeps Tab inside the dialog and returns focus to the button that opened it.
+  // Must come BEFORE the effect below, which moves focus into the dialog.
+  useFocusTrap(open, dialogRef);
 
   useEffect(() => {
     if (!open) return;
@@ -26,7 +33,8 @@ export default function ConfirmDialog({
     cancelRef.current?.focus();
 
     const onKey = (e) => {
-      if (e.key === "Escape") {
+      // Ignore Escape while a delete request is in flight.
+      if (e.key === "Escape" && !busyRef.current) {
         onCancelRef.current();
       }
     };
@@ -45,18 +53,20 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6">
       {/* Background overlay */}
       <div
-        onClick={onCancel}
+        onClick={busy ? undefined : onCancel}
         aria-hidden="true"
         className="absolute inset-0 animate-fade-in bg-ink/40 motion-reduce:animate-none"
       />
 
       {/* Confirmation dialog */}
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby="confirm-message"
-        className="relative w-full animate-sheet-in rounded-t-[28px] bg-white px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-10px_40px_rgb(17_18_20/0.18)] motion-reduce:animate-none lg:max-w-sm lg:animate-fade-in lg:rounded-3xl lg:p-7 lg:shadow-float"
+        className="relative w-full animate-sheet-in rounded-t-[28px] bg-white px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-10px_40px_rgb(17_18_20/0.18)] outline-none motion-reduce:animate-none lg:max-w-sm lg:animate-fade-in lg:rounded-3xl lg:p-7 lg:shadow-float"
       >
         <div className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-[#D6D8DC] lg:hidden" />
 

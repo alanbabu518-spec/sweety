@@ -13,6 +13,7 @@ export default function ReadingForm({
   onSlot,
   readings,
   sheetOpen,
+  disabled = false, // true while the day's readings are still loading
   onClose,
   onDone,
 }) {
@@ -23,6 +24,10 @@ export default function ReadingForm({
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const inputRef = useRef(null);
+  // Set synchronously, so a double-click or double Enter cannot send two requests
+  // before React has re-rendered the disabled button.
+  const busyRef = useRef(false);
+  const locked = saving || deleting || disabled;
   useScrollLock(sheetOpen, true);
 
   // Prefill when the selected slot (or its reading) changes.
@@ -39,6 +44,8 @@ export default function ReadingForm({
 
   async function submit(e) {
     e.preventDefault();
+    if (busyRef.current || disabled) return;
+    busyRef.current = true;
     setError("");
     setSaving(true);
     try {
@@ -49,11 +56,14 @@ export default function ReadingForm({
     } catch (err) {
       setError(errorMessage(err));
     } finally {
+      busyRef.current = false;
       setSaving(false);
     }
   }
 
   async function remove() {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setDeleting(true);
     try {
       await api.delete(`/readings/${reading.id}`);
@@ -63,6 +73,7 @@ export default function ReadingForm({
       setConfirming(false);
       setError(errorMessage(err));
     } finally {
+      busyRef.current = false;
       setDeleting(false);
     }
   }
@@ -107,6 +118,7 @@ export default function ReadingForm({
                 key={s.value}
                 type="button"
                 aria-pressed={on}
+                disabled={locked}
                 onClick={() => onSlot(s.value)}
                 className={`press flex min-h-12 items-center justify-center gap-2 rounded-[14px] text-sm font-semibold ${on ? "bg-ink text-white" : "bg-chip text-ink"}`}
               >
@@ -135,6 +147,7 @@ export default function ReadingForm({
             autoComplete="off"
             placeholder="110"
             value={value}
+            readOnly={locked}
             onChange={(e) => setValue(e.target.value)}
             aria-invalid={!!error}
             aria-describedby={error ? "value-error" : undefined}
@@ -146,13 +159,14 @@ export default function ReadingForm({
           <FormError id="value-error">{error}</FormError>
         </div>
 
-        <button className={btnPrimary} disabled={saving}>
+        <button className={btnPrimary} disabled={locked}>
           {saving ? "Saving…" : reading ? "Save changes" : "Save reading"}
         </button>
         <div className="mt-1 flex justify-center">
           {reading && (
             <button
               type="button"
+              disabled={locked}
               onClick={() => setConfirming(true)}
               className={`${btnText} !text-danger`}
             >
