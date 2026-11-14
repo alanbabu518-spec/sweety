@@ -8,7 +8,7 @@ const router = express.Router();
 router.use(requireAuth);
 
 const getDate = (req) => {
-  const date = req.query.date || todayString();
+  const date = req.query.date || todayString(req.timezone);
   if (!isValidDateString(date))
     throw new HttpError("Please choose a valid date.");
   return date;
