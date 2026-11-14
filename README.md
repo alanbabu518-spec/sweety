@@ -21,13 +21,20 @@ A calm, simple blood glucose tracking application. Log up to four readings a day
   <img src="https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/Express-000000?logo=express&logoColor=white" alt="Express" />
   <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Jest-C21325?logo=jest&logoColor=white" alt="Jest" />
 </p>
 
-**Live Application:** https://sweety-fawn.vercel.app/
+<!--
+  DEMO: replace the file below with your own 10 to 20 second GIF.
+  Record it, save it as docs/demo.gif (keep it under 10 MB) and push it.
+-->
+<p align="center">
+  <img src="docs/demo.gif" alt="Sweety demo: logging a reading and viewing reports" width="720" />
+</p>
 
-**Demo Video:** https://drive.google.com/file/d/1EheVpJvt1XZshBXpcXc8PLVFWbfeSQ04/view?usp=sharing
+> The live demo runs on free hosting. If it has been idle, the first request can take up to a minute while the server wakes up.
 
-> The application is hosted on free services. The backend may take some time to start after a period of inactivity.
+**Live Application:** [https://sweety-fawn.vercel.app/](https://sweety-fawn.vercel.app/)
 
 ---
 
