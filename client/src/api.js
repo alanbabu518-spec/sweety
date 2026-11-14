@@ -4,10 +4,15 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000",
 });
 
-// Attach the login token to every request.
+// The browser's time zone (e.g. "Asia/Kolkata"). The server uses it to decide what "today" is,
+// so the "Date cannot be in the future" rule matches the user's own calendar.
+const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// Attach the login token and time zone to every request.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  config.headers["X-Timezone"] = TIME_ZONE;
   return config;
 });
 

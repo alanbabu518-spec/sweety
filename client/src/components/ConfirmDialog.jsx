@@ -12,28 +12,45 @@ export default function ConfirmDialog({
 }) {
   const cancelRef = useRef(null);
   const onCancelRef = useRef(onCancel);
-  onCancelRef.current = onCancel; // always the latest handler, without re-running the effect
+
+  // Always keep the latest cancel handler.
+  onCancelRef.current = onCancel;
+
+  // Hooks must always execute in the same order.
+  useScrollLock(open);
 
   useEffect(() => {
     if (!open) return;
-    cancelRef.current?.focus(); // safest default: Enter won't delete
+
+    // Focus Cancel by default to prevent accidental deletion.
+    cancelRef.current?.focus();
+
     const onKey = (e) => {
-      if (e.key === "Escape") onCancelRef.current();
+      if (e.key === "Escape") {
+        onCancelRef.current();
+      }
     };
+
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
+  // Conditional rendering happens after all hooks.
   if (!open) return null;
-  useScrollLock(open);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6">
+      {/* Background overlay */}
       <div
         onClick={onCancel}
         aria-hidden="true"
         className="absolute inset-0 animate-fade-in bg-ink/40 motion-reduce:animate-none"
       />
+
+      {/* Confirmation dialog */}
       <div
         role="alertdialog"
         aria-modal="true"
@@ -42,9 +59,11 @@ export default function ConfirmDialog({
         className="relative w-full animate-sheet-in rounded-t-[28px] bg-white px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-10px_40px_rgb(17_18_20/0.18)] motion-reduce:animate-none lg:max-w-sm lg:animate-fade-in lg:rounded-3xl lg:p-7 lg:shadow-float"
       >
         <div className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-[#D6D8DC] lg:hidden" />
+
         <h2 id="confirm-title" className="text-xl font-bold tracking-tight">
           {title}
         </h2>
+
         <p
           id="confirm-message"
           className="mt-2 text-[15px] leading-relaxed text-muted"
@@ -62,6 +81,7 @@ export default function ConfirmDialog({
           >
             Cancel
           </button>
+
           <button
             type="button"
             onClick={onConfirm}
