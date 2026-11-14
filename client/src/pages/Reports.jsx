@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import api, { errorMessage } from "../api";
+import api from "../api";
 import { card } from "../ui";
 import { todayString } from "../dates";
 import DateChip from "../components/DateChip";
-import FormError from "../components/FormError";
+import ErrorPage from "../components/ErrorPage";
 import ReportCard from "../components/ReportCard";
 
 const TABS = [
@@ -17,12 +17,13 @@ export default function Reports() {
   const [tab, setTab] = useState("daily");
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null); // the failed request, if any
+  const [attempt, setAttempt] = useState(0); // bump to retry
 
   useEffect(() => {
     let ignore = false;
     setLoading(true);
-    setError("");
+    setError(null);
 
     Promise.all([
       api.get("/reports/daily", { params: { date } }),
@@ -37,13 +38,13 @@ export default function Reports() {
           monthly: monthly.data.report,
         });
       })
-      .catch((err) => !ignore && setError(errorMessage(err)))
+      .catch((err) => !ignore && setError(err))
       .finally(() => !ignore && setLoading(false));
 
     return () => {
       ignore = true;
     };
-  }, [date]);
+  }, [date, attempt]);
 
   // On mobile only the chosen tab shows; from lg: up everything shows.
   const show = (key) => (tab === key ? "block" : "hidden lg:block");
@@ -75,7 +76,13 @@ export default function Reports() {
         ))}
       </div>
 
-      {error && <FormError>{error}</FormError>}
+      {error && (
+        <ErrorPage
+          variant="inline"
+          error={error}
+          onRetry={() => setAttempt((n) => n + 1)}
+        />
+      )}
       {!reports && loading && <p className="text-muted">Loading…</p>}
 
       {reports && (

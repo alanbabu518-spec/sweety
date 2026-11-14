@@ -31,6 +31,18 @@ api.interceptors.response.use(
   },
 );
 
+// What kind of problem is this? Used by <ErrorPage> to pick the right screen.
+export const errorKind = (err) => {
+  const status = err?.response?.status;
+  if (!err?.response) return "network"; // no answer: offline, server down, timeout
+  if (status === 401) return "session";
+  if (status === 403) return "forbidden";
+  if (status === 404) return "notfound";
+  if (status === 429) return "ratelimit";
+  if (status >= 500) return "server";
+  return "generic";
+};
+
 // Pull the server's friendly message out of an error.
 export const errorMessage = (err) =>
   err.response?.data?.error || "Could not reach the server. Please try again.";

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import api, { errorMessage } from "../api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import api from "../api";
 import { SLOTS } from "../slots";
 import { card } from "../ui";
 import {
@@ -12,7 +12,7 @@ import {
 } from "../dates";
 import DateChip from "../components/DateChip";
 import DropProgress from "../components/DropProgress";
-import FormError from "../components/FormError";
+import ErrorPage from "../components/ErrorPage";
 import ReadingForm from "../components/ReadingForm";
 
 const firstEmptySlot = (readings) =>
@@ -31,8 +31,9 @@ function DateStrip({ date, onChange }) {
             type="button"
             aria-pressed={on}
             aria-label={formatLong(d)}
+            disabled={d > today}
             onClick={() => onChange(d)}
-            className={`press flex h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl text-base font-semibold ${
+            className={`press flex h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl text-base font-semibold disabled:cursor-not-allowed ${
               on ? "bg-ink text-white" : d > today ? "text-faint" : "text-ink"
             }`}
           >
@@ -156,24 +157,41 @@ export default function Readings() {
   const [date, setDate] = useState(todayString());
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState(null); // the failed request, if any
   const [slot, setSlot] = useState(null); // selected slot key
   const [sheetOpen, setSheetOpen] = useState(false); // mobile bottom sheet
 
+  // Only the newest request may update the screen. Starting a new load cancels
+  // the previous one, and a late answer for an old date is ignored.
+  const latest = useRef({ id: 0, controller: null });
+
   const load = useCallback(async () => {
-    setError("");
+    latest.current.controller?.abort();
+    const controller = new AbortController();
+    const id = ++latest.current.id;
+    latest.current.controller = controller;
+    const isStale = () => controller.signal.aborted || id !== latest.current.id;
+
+    setLoadError(null);
     try {
-      const { data } = await api.get("/readings", { params: { date } });
+      const { data } = await api.get("/readings", {
+        params: { date },
+        signal: controller.signal,
+      });
+      if (isStale()) return;
       setReadings(data.readings);
     } catch (err) {
-      setError(errorMessage(err));
+      if (isStale()) return;
+      setLoadError(err);
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [date]);
 
   useEffect(() => {
     load();
+    // Date changed (or page closed): drop the request that is still in flight.
+    return () => latest.current.controller?.abort();
   }, [load]);
 
   // Once data is in, default to the first slot that has no reading yet.
@@ -218,7 +236,7 @@ export default function Readings() {
           >
             ‹
           </ArrowButton>
-          <DateChip value={date} onChange={changeDate} />
+          <DateChip value={date} max={today} onChange={changeDate} />
           <ArrowButton
             label="Next day"
             disabled={date >= today}
@@ -255,27 +273,32 @@ export default function Readings() {
               ))}
             </div>
 
-            {error && (
-              <div className="mb-3">
-                <FormError>{error}</FormError>
+            {loadError ? (
+              <ErrorPage
+                variant="inline"
+                error={loadError}
+                onRetry={() => {
+                  setLoading(true);
+                  load();
+                }}
+              />
+            ) : (
+              <div className={`${card} overflow-hidden`}>
+                {SLOTS.map((s, i) => (
+                  <SlotRow
+                    key={s.value}
+                    slot={s}
+                    reading={readings.find((r) => r.slot === s.value)}
+                    active={slot === s.value}
+                    last={i === SLOTS.length - 1}
+                    onPick={() => {
+                      setSlot(s.value);
+                      setSheetOpen(true);
+                    }}
+                  />
+                ))}
               </div>
             )}
-
-            <div className={`${card} overflow-hidden`}>
-              {SLOTS.map((s, i) => (
-                <SlotRow
-                  key={s.value}
-                  slot={s}
-                  reading={readings.find((r) => r.slot === s.value)}
-                  active={slot === s.value}
-                  last={i === SLOTS.length - 1}
-                  onPick={() => {
-                    setSlot(s.value);
-                    setSheetOpen(true);
-                  }}
-                />
-              ))}
-            </div>
           </section>
         </div>
 
@@ -285,6 +308,7 @@ export default function Readings() {
           onSlot={setSlot}
           readings={readings}
           sheetOpen={sheetOpen}
+          disabled={loading}
           onClose={() => setSheetOpen(false)}
           onDone={afterSave}
         />
