@@ -6,7 +6,9 @@ types.setTypeParser(1082, (value) => value);
 
 const pool = new Pool({
   connectionString: config.databaseUrl,
-  connectionTimeoutMillis: 5000, // fail fast instead of hanging if PostgreSQL is unreachable
+  connectionTimeoutMillis: 10000, // allows a Neon database that was asleep to wake up
+  idleTimeoutMillis: 30000, // close idle connections before Neon / its pooler does
+  keepAlive: true,
 });
 
 // Without this handler, an error on an idle connection would crash the whole process.
