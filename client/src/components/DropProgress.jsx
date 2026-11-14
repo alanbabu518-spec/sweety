@@ -1,4 +1,4 @@
-import { DROP_PATHS } from "./Logo";
+import { DROP_PATHS } from "./logoPaths";
 import { SLOTS } from "../slots";
 
 export default function DropProgress({ logged, size = 112 }) {

@@ -13,17 +13,8 @@ export default function ConfirmDialog({
 }) {
   const dialogRef = useRef(null);
   const cancelRef = useRef(null);
-  const onCancelRef = useRef(onCancel);
-  const busyRef = useRef(busy);
 
-  // Always keep the latest values.
-  onCancelRef.current = onCancel;
-  busyRef.current = busy;
-
-  // Hooks must always execute in the same order.
   useScrollLock(open);
-  // Keeps Tab inside the dialog and returns focus to the button that opened it.
-  // Must come BEFORE the effect below, which moves focus into the dialog.
   useFocusTrap(open, dialogRef);
 
   useEffect(() => {
@@ -32,10 +23,9 @@ export default function ConfirmDialog({
     // Focus Cancel by default to prevent accidental deletion.
     cancelRef.current?.focus();
 
-    const onKey = (e) => {
-      // Ignore Escape while a delete request is in flight.
-      if (e.key === "Escape" && !busyRef.current) {
-        onCancelRef.current();
+    const onKey = (event) => {
+      if (event.key === "Escape" && !busy) {
+        onCancel();
       }
     };
 
@@ -44,21 +34,18 @@ export default function ConfirmDialog({
     return () => {
       window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, busy, onCancel]);
 
-  // Conditional rendering happens after all hooks.
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6">
-      {/* Background overlay */}
       <div
         onClick={busy ? undefined : onCancel}
         aria-hidden="true"
         className="absolute inset-0 animate-fade-in bg-ink/40 motion-reduce:animate-none"
       />
 
-      {/* Confirmation dialog */}
       <div
         ref={dialogRef}
         tabIndex={-1}

@@ -13,45 +13,57 @@ export default function ReadingForm({
   onSlot,
   readings,
   sheetOpen,
-  disabled = false, // true while the day's readings are still loading
+  disabled = false,
   onClose,
   onDone,
 }) {
-  const reading = readings.find((r) => r.slot === slot) || null;
-  const [value, setValue] = useState("");
+  const reading = readings.find((item) => item.slot === slot) || null;
+
+  const [value, setValue] = useState(() =>
+    reading ? String(reading.value) : "",
+  );
+
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
   const inputRef = useRef(null);
-  // Set synchronously, so a double-click or double Enter cannot send two requests
-  // before React has re-rendered the disabled button.
   const busyRef = useRef(false);
+
   const locked = saving || deleting || disabled;
+
   useScrollLock(sheetOpen, true);
 
-  // Prefill when the selected slot (or its reading) changes.
+  // Focus the number field when the mobile sheet opens.
   useEffect(() => {
-    setValue(reading ? String(reading.value) : "");
-    setError("");
-    setConfirming(false);
-  }, [reading?.id, reading?.value, slot, date]);
-
-  // On open, focus the number field so the numeric keyboard appears.
-  useEffect(() => {
-    if (sheetOpen) inputRef.current?.focus();
+    if (sheetOpen) {
+      inputRef.current?.focus();
+    }
   }, [sheetOpen, slot]);
 
-  async function submit(e) {
-    e.preventDefault();
+  async function submit(event) {
+    event.preventDefault();
+
     if (busyRef.current || disabled) return;
+
     busyRef.current = true;
     setError("");
     setSaving(true);
+
     try {
-      const body = { date, slot, value };
-      if (reading) await api.put(`/readings/${reading.id}`, body);
-      else await api.post("/readings", body);
+      const body = {
+        date,
+        slot,
+        value,
+      };
+
+      if (reading) {
+        await api.put(`/readings/${reading.id}`, body);
+      } else {
+        await api.post("/readings", body);
+      }
+
       onDone();
     } catch (err) {
       setError(errorMessage(err));
@@ -62,11 +74,14 @@ export default function ReadingForm({
   }
 
   async function remove() {
-    if (busyRef.current) return;
+    if (busyRef.current || !reading) return;
+
     busyRef.current = true;
     setDeleting(true);
+
     try {
       await api.delete(`/readings/${reading.id}`);
+
       setConfirming(false);
       onDone();
     } catch (err) {
@@ -78,7 +93,7 @@ export default function ReadingForm({
     }
   }
 
-  const slotLabel = SLOTS.find((s) => s.value === slot)?.label;
+  const slotLabel = SLOTS.find((item) => item.value === slot)?.label;
 
   return (
     <>
@@ -104,28 +119,35 @@ export default function ReadingForm({
           <h2 className="text-[22px] font-bold tracking-tight lg:text-[13px] lg:font-semibold lg:uppercase lg:tracking-wide lg:text-muted">
             {reading ? "Edit reading" : "Add a reading"}
           </h2>
+
           <span className="text-sm font-medium text-muted lg:hidden">
             {formatDate(date)}
           </span>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-2">
-          {SLOTS.map((s) => {
-            const on = s.value === slot;
-            const filled = readings.some((r) => r.slot === s.value);
+          {SLOTS.map((item) => {
+            const active = item.value === slot;
+            const filled = readings.some((entry) => entry.slot === item.value);
+
             return (
               <button
-                key={s.value}
+                key={item.value}
                 type="button"
-                aria-pressed={on}
+                aria-pressed={active}
                 disabled={locked}
-                onClick={() => onSlot(s.value)}
-                className={`press flex min-h-12 items-center justify-center gap-2 rounded-[14px] text-sm font-semibold ${on ? "bg-ink text-white" : "bg-chip text-ink"}`}
+                onClick={() => onSlot(item.value)}
+                className={`press flex min-h-12 items-center justify-center gap-2 rounded-[14px] text-sm font-semibold ${
+                  active ? "bg-ink text-white" : "bg-chip text-ink"
+                }`}
               >
-                {s.label}
+                {item.label}
+
                 {filled && (
                   <span
-                    className={`size-1.5 rounded-full ${on ? "bg-mint" : "bg-brand"}`}
+                    className={`size-1.5 rounded-full ${
+                      active ? "bg-mint" : "bg-brand"
+                    }`}
                     aria-label="has a reading"
                   />
                 )}
@@ -137,8 +159,11 @@ export default function ReadingForm({
         <label htmlFor="value" className="mb-2 block text-[13px] font-semibold">
           Glucose
         </label>
+
         <div
-          className={`flex items-baseline gap-2 border-b-2 pb-2.5 transition-colors ${error ? "border-danger" : "border-ink/20 focus-within:border-ink"}`}
+          className={`flex items-baseline gap-2 border-b-2 pb-2.5 transition-colors ${
+            error ? "border-danger" : "border-ink/20 focus-within:border-ink"
+          }`}
         >
           <input
             ref={inputRef}
@@ -148,20 +173,23 @@ export default function ReadingForm({
             placeholder="110"
             value={value}
             readOnly={locked}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(event) => setValue(event.target.value)}
             aria-invalid={!!error}
             aria-describedby={error ? "value-error" : undefined}
             className="min-w-0 flex-1 bg-transparent text-5xl font-bold tracking-display outline-none placeholder:text-faint/50"
           />
+
           <span className="text-base font-medium text-muted">mg/dl</span>
         </div>
+
         <div className="mb-7 mt-3 min-h-5">
           <FormError id="value-error">{error}</FormError>
         </div>
 
-        <button className={btnPrimary} disabled={locked}>
+        <button type="submit" className={btnPrimary} disabled={locked}>
           {saving ? "Saving…" : reading ? "Save changes" : "Save reading"}
         </button>
+
         <div className="mt-1 flex justify-center">
           {reading && (
             <button
@@ -173,6 +201,7 @@ export default function ReadingForm({
               Delete
             </button>
           )}
+
           <button
             type="button"
             onClick={onClose}

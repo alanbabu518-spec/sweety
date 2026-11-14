@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { errorMessage } from "../api";
 import { btnPrimary } from "../ui";
 import AuthLayout from "../components/AuthLayout";

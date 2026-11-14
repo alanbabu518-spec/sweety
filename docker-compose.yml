@@ -10,7 +10,59 @@ services:
       - "5435:5432"
     volumes:
       - sweety_pgdata:/var/lib/postgresql/data
-      - ./server/docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+      - ./server/docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sweety -d sweety"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgres://sweety:sweety@db:5432/sweety
+      JWT_SECRET: local-docker-only-secret-change-before-deployment
+      JWT_EXPIRES_IN: 7d
+      CLIENT_ORIGIN: http://localhost:8081
+      APP_TIMEZONE: Asia/Kolkata
+      TRUST_PROXY: 0
+      RATE_LIMIT_WINDOW_MINUTES: 15
+      LOGIN_RATE_LIMIT_MAX: 10
+      REGISTER_RATE_LIMIT_MAX: 10
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npm run migrate && npm start"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/health/ready').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:4000
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   sweety_pgdata:

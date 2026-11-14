@@ -1,9 +1,5 @@
-export const DROP_PATHS = [
-  "M123 30.2L65.6 102A80 80 0 0 0 48.2 147L123 147Z",
-  "M133 30.2L190.4 102A80 80 0 0 1 207.8 147L133 147Z",
-  "M123 157L48.2 157A80 80 0 0 0 123 231.8Z",
-  "M133 157L207.8 157A80 80 0 0 1 133 231.8Z",
-];
+import { DROP_PATHS } from "./logoPaths";
+
 const SMALL = [
   "M120 34L65.6 102A80 80 0 0 0 48.4 144L120 144Z",
   "M136 34L190.4 102A80 80 0 0 1 207.6 144L136 144Z",
@@ -13,6 +9,7 @@ const SMALL = [
 
 export default function Logo({ size = 28, className = "" }) {
   const paths = size < 32 ? SMALL : DROP_PATHS;
+
   return (
     <svg
       width={size}
@@ -22,8 +19,8 @@ export default function Logo({ size = 28, className = "" }) {
       aria-hidden="true"
       className={className}
     >
-      {paths.map((d) => (
-        <path key={d} d={d} />
+      {paths.map((path) => (
+        <path key={path} d={path} />
       ))}
     </svg>
   );

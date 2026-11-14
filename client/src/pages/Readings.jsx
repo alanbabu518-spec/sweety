@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../api";
 import { SLOTS } from "../slots";
 import { card } from "../ui";
@@ -16,33 +16,42 @@ import ErrorPage from "../components/ErrorPage";
 import ReadingForm from "../components/ReadingForm";
 
 const firstEmptySlot = (readings) =>
-  SLOTS.find((s) => !readings.some((r) => r.slot === s.value))?.value ??
-  "morning";
+  SLOTS.find((item) => !readings.some((reading) => reading.slot === item.value))
+    ?.value ?? "morning";
 
 function DateStrip({ date, onChange }) {
   const today = todayString();
+
   return (
     <div className="mb-6 flex gap-1.5 lg:hidden">
-      {weekDays(date).map((d) => {
-        const on = d === date;
+      {weekDays(date).map((day) => {
+        const active = day === date;
+
         return (
           <button
-            key={d}
+            key={day}
             type="button"
-            aria-pressed={on}
-            aria-label={formatLong(d)}
-            disabled={d > today}
-            onClick={() => onChange(d)}
+            aria-pressed={active}
+            aria-label={formatLong(day)}
+            disabled={day > today}
+            onClick={() => onChange(day)}
             className={`press flex h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl text-base font-semibold disabled:cursor-not-allowed ${
-              on ? "bg-ink text-white" : d > today ? "text-faint" : "text-ink"
+              active
+                ? "bg-ink text-white"
+                : day > today
+                  ? "text-faint"
+                  : "text-ink"
             }`}
           >
             <span
-              className={`text-[11px] font-medium ${on ? "text-white/70" : "text-muted"}`}
+              className={`text-[11px] font-medium ${
+                active ? "text-white/70" : "text-muted"
+              }`}
             >
-              {weekdayShort(d)}
+              {weekdayShort(day)}
             </span>
-            {dayNumber(d)}
+
+            {dayNumber(day)}
           </button>
         );
       })}
@@ -64,41 +73,51 @@ function ArrowButton({ label, onClick, disabled, children }) {
   );
 }
 
-// Desktop-only at-a-glance card: average, highest, lowest and the four-part drop.
 function DaySummary({ readings }) {
-  const values = readings.map((r) => r.value);
-  const logged = new Set(readings.map((r) => r.slot));
+  const values = readings.map((reading) => reading.value);
+
+  const logged = new Set(readings.map((reading) => reading.slot));
+
   const average = values.length
-    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)
+    ? (
+        values.reduce((total, value) => total + value, 0) / values.length
+      ).toFixed(1)
     : "—";
 
   return (
     <section className={`${card} hidden items-center gap-8 p-7 lg:flex`}>
       <DropProgress logged={logged} size={112} />
+
       <div className="min-w-0 flex-1">
         <h2 className="text-[13px] font-semibold tracking-wide text-muted">
           AVERAGE
         </h2>
+
         <p className="mt-1 flex items-baseline gap-2">
           <span className="text-[56px] font-bold leading-none tracking-[-0.04em]">
             {average}
           </span>
+
           <span className="text-base font-medium text-muted">mg/dl</span>
         </p>
       </div>
+
       <dl className="flex gap-8 border-l border-ink/5 pl-8">
         <div>
           <dt className="text-[13px] font-semibold tracking-wide text-muted">
             HIGHEST
           </dt>
+
           <dd className="mt-1 text-[28px] font-bold tracking-[-0.03em]">
             {values.length ? Math.max(...values) : "—"}
           </dd>
         </div>
+
         <div>
           <dt className="text-[13px] font-semibold tracking-wide text-muted">
             LOWEST
           </dt>
+
           <dd className="mt-1 text-[28px] font-bold tracking-[-0.03em]">
             {values.length ? Math.min(...values) : "—"}
           </dd>
@@ -113,7 +132,9 @@ function SlotRow({ slot, reading, active, last, onPick }) {
     <button
       type="button"
       onClick={onPick}
-      className={`press flex min-h-[72px] w-full items-center gap-3.5 px-5 text-left lg:min-h-20 lg:px-7 ${last ? "" : "border-b border-ink/5"} ${active ? "lg:bg-chip/60" : ""}`}
+      className={`press flex min-h-[72px] w-full items-center gap-3.5 px-5 text-left lg:min-h-20 lg:px-7 ${
+        last ? "" : "border-b border-ink/5"
+      } ${active ? "lg:bg-chip/60" : ""}`}
     >
       {reading ? (
         <span className="grid size-8 place-items-center rounded-full bg-brand-tint">
@@ -134,14 +155,19 @@ function SlotRow({ slot, reading, active, last, onPick }) {
       ) : (
         <span className="size-8 rounded-full border-[1.5px] border-dashed border-faint" />
       )}
+
       <span
-        className={`flex-1 text-base font-semibold ${reading ? "" : "text-muted"}`}
+        className={`flex-1 text-base font-semibold ${
+          reading ? "" : "text-muted"
+        }`}
       >
         {slot.label}
       </span>
+
       {reading ? (
         <span className="text-2xl font-bold tracking-tight">
           {reading.value}
+
           <small className="ml-1 text-xs font-medium text-muted">mg/dl</small>
         </span>
       ) : (
@@ -156,66 +182,73 @@ function SlotRow({ slot, reading, active, last, onPick }) {
 export default function Readings() {
   const [date, setDate] = useState(todayString());
   const [readings, setReadings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null); // the failed request, if any
-  const [slot, setSlot] = useState(null); // selected slot key
-  const [sheetOpen, setSheetOpen] = useState(false); // mobile bottom sheet
+  const [loadErrorState, setLoadErrorState] = useState(null);
+  const [slot, setSlot] = useState(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [loadedRequest, setLoadedRequest] = useState(null);
 
-  // Only the newest request may update the screen. Starting a new load cancels
-  // the previous one, and a late answer for an old date is ignored.
-  const latest = useRef({ id: 0, controller: null });
+  const requestKey = `${date}-${attempt}`;
 
-  const load = useCallback(async () => {
-    latest.current.controller?.abort();
+  const loading = loadedRequest !== requestKey;
+
+  const loadError =
+    loadErrorState?.key === requestKey ? loadErrorState.error : null;
+
+  useEffect(() => {
     const controller = new AbortController();
-    const id = ++latest.current.id;
-    latest.current.controller = controller;
-    const isStale = () => controller.signal.aborted || id !== latest.current.id;
 
-    setLoadError(null);
-    try {
-      const { data } = await api.get("/readings", {
-        params: { date },
-        signal: controller.signal,
-      });
-      if (isStale()) return;
-      setReadings(data.readings);
-    } catch (err) {
-      if (isStale()) return;
-      setLoadError(err);
-    } finally {
-      if (!isStale()) setLoading(false);
+    async function fetchReadings() {
+      try {
+        const { data } = await api.get("/readings", {
+          params: { date },
+          signal: controller.signal,
+        });
+
+        if (controller.signal.aborted) return;
+
+        setReadings(data.readings);
+        setLoadErrorState(null);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+
+        setLoadErrorState({
+          key: requestKey,
+          error: err,
+        });
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadedRequest(requestKey);
+        }
+      }
     }
-  }, [date]);
 
-  useEffect(() => {
-    load();
-    // Date changed (or page closed): drop the request that is still in flight.
-    return () => latest.current.controller?.abort();
-  }, [load]);
+    fetchReadings();
 
-  // Once data is in, default to the first slot that has no reading yet.
-  useEffect(() => {
-    if (!loading && slot === null) setSlot(firstEmptySlot(readings));
-  }, [loading, slot, readings]);
+    return () => {
+      controller.abort();
+    };
+  }, [date, attempt, requestKey]);
 
-  const changeDate = (d) => {
+  const selectedSlot =
+    slot ?? (!loading ? firstEmptySlot(readings) : "morning");
+
+  const changeDate = (nextDate) => {
     setSlot(null);
-    setLoading(true);
     setSheetOpen(false);
-    setDate(d);
+    setDate(nextDate);
   };
 
   const afterSave = () => {
     setSheetOpen(false);
     setSlot(null);
-    setLoading(true);
-    load();
+    setAttempt((current) => current + 1);
   };
 
-  const logged = SLOTS.filter((s) =>
-    readings.some((r) => r.slot === s.value),
+  const logged = SLOTS.filter((item) =>
+    readings.some((reading) => reading.slot === item.value),
   ).length;
+
   const today = todayString();
 
   return (
@@ -225,10 +258,12 @@ export default function Readings() {
           <p className="mb-1.5 text-sm font-medium text-muted lg:mb-2 lg:text-[15px]">
             {formatLong(date)}
           </p>
+
           <h1 className="text-[34px] font-bold leading-none tracking-display lg:text-[44px]">
             {date === today ? "Today" : "Readings"}
           </h1>
         </div>
+
         <div className="flex items-center gap-2">
           <ArrowButton
             label="Previous day"
@@ -236,7 +271,9 @@ export default function Readings() {
           >
             ‹
           </ArrowButton>
+
           <DateChip value={date} max={today} onChange={changeDate} />
+
           <ArrowButton
             label="Next day"
             disabled={date >= today}
@@ -251,7 +288,9 @@ export default function Readings() {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start">
         <div
-          className={`space-y-6 transition-opacity ${loading ? "opacity-60" : ""}`}
+          className={`space-y-6 transition-opacity ${
+            loading ? "opacity-60" : ""
+          }`}
         >
           <DaySummary readings={readings} />
 
@@ -260,15 +299,19 @@ export default function Readings() {
               <h2 className="text-[13px] font-semibold tracking-wide text-muted">
                 DAILY LOG
               </h2>
+
               <span className="text-[13px] font-semibold text-brand">
                 {logged} of 4 logged
               </span>
             </div>
+
             <div className="mb-4 flex gap-1 lg:hidden" aria-hidden="true">
-              {[0, 1, 2, 3].map((i) => (
+              {[0, 1, 2, 3].map((index) => (
                 <i
-                  key={i}
-                  className={`h-1 flex-1 rounded-sm ${i < logged ? "bg-brand" : "bg-[#E4E2DC]"}`}
+                  key={index}
+                  className={`h-1 flex-1 rounded-sm ${
+                    index < logged ? "bg-brand" : "bg-[#E4E2DC]"
+                  }`}
                 />
               ))}
             </div>
@@ -277,22 +320,21 @@ export default function Readings() {
               <ErrorPage
                 variant="inline"
                 error={loadError}
-                onRetry={() => {
-                  setLoading(true);
-                  load();
-                }}
+                onRetry={() => setAttempt((current) => current + 1)}
               />
             ) : (
               <div className={`${card} overflow-hidden`}>
-                {SLOTS.map((s, i) => (
+                {SLOTS.map((item, index) => (
                   <SlotRow
-                    key={s.value}
-                    slot={s}
-                    reading={readings.find((r) => r.slot === s.value)}
-                    active={slot === s.value}
-                    last={i === SLOTS.length - 1}
+                    key={item.value}
+                    slot={item}
+                    reading={readings.find(
+                      (reading) => reading.slot === item.value,
+                    )}
+                    active={selectedSlot === item.value}
+                    last={index === SLOTS.length - 1}
                     onPick={() => {
-                      setSlot(s.value);
+                      setSlot(item.value);
                       setSheetOpen(true);
                     }}
                   />
@@ -303,12 +345,13 @@ export default function Readings() {
         </div>
 
         <ReadingForm
+          key={`${date}-${selectedSlot}`}
           date={date}
-          slot={slot ?? "morning"}
+          slot={selectedSlot}
           onSlot={setSlot}
           readings={readings}
           sheetOpen={sheetOpen}
-          disabled={loading}
+          disabled={loading || !!loadError}
           onClose={() => setSheetOpen(false)}
           onDone={afterSave}
         />

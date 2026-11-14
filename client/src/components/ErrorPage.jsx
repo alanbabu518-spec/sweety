@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { errorKind, errorMessage } from "../api";
 import { card } from "../ui";
-import Logo, { DROP_PATHS } from "./Logo";
+import Logo from "./Logo";
+import { DROP_PATHS } from "./logoPaths";
 
 const INK = "#111214";
 const MINT = "#5BD1AE";

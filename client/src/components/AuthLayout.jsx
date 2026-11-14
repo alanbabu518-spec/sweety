@@ -1,4 +1,5 @@
-import Logo, { DROP_PATHS } from "./Logo";
+import Logo from "./Logo";
+import { DROP_PATHS } from "./logoPaths";
 
 function DropArt({ className = "" }) {
   return (

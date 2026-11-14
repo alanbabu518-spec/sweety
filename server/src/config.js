@@ -56,7 +56,7 @@ function loadConfig(env = process.env) {
   let clientOrigin = env.CLIENT_ORIGIN;
   if (!clientOrigin) {
     if (isProduction) errors.push("CLIENT_ORIGIN is required in production.");
-    clientOrigin = "http://localhost:5173";
+    clientOrigin = "http://localhost:8081";
   } else {
     try {
       new URL(clientOrigin);

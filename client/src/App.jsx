@@ -1,5 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./hooks/useAuth";
 import AppShell from "./components/AppShell";
 import ErrorPage from "./components/ErrorPage";
 import Login from "./pages/Login";
